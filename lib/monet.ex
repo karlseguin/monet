@@ -118,6 +118,8 @@ defmodule Monet do
 	end
 
 	@doc """
+	Same as query but returns a %Monet.Result{}, raises a %Monet.Error{} or raises
+	whatever custom rollback value you provide.
 	"""
 	def transaction!(pool \\ __MODULE__, sql) do
 		case transaction(pool, sql) do
@@ -126,6 +128,22 @@ defmodule Monet do
 		end
 	end
 
+	@doc """
+	Commits the transaction. This can either be called implicitly based on the
+	return value of your transaction `fun`:
+
+			Monet.transaction!(fn tx ->
+				....
+				{:commit, return_value} # or simply {:ok, return_value}
+			end)
+
+	 or explicitly:
+
+			Monet.transaction!(fn tx ->
+				....
+				Monet.commit(tx, return_value)
+			end)
+	"""
 	def commit(tx, {:ok, result}), do: commit(tx, result)
 	def commit(tx, {:commit, result}), do: commit(tx, result)
 	def commit(tx, result) do
@@ -134,6 +152,22 @@ defmodule Monet do
 		end
 	end
 
+	@doc """
+	Rollsback the transaction. This can either be called implicitly based on the
+	return value of your transaction `fun`:
+
+			Monet.transaction!(fn tx ->
+				....
+				{:rollback, return_value}
+			end)
+
+	 or explicitly:
+
+			Monet.transaction!(fn tx ->
+				....
+				Monet.rollback(tx, return_value)
+			end)
+	"""
 	def rollback(tx, result) do
 		with :ok <- Monet.Transaction.rollback(tx) do
 			{:error, result}
