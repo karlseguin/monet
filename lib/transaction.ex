@@ -14,19 +14,19 @@ defmodule Monet.Transaction do
 	@doc """
 	Executes the query using the specific transaction
 	"""
-	def query(tx, sql, args \\ nil)
-
-	# With no arguments, we can pass this to `Connection.query/3` as-is
-	def query(tx, sql, args) do
+	def query(tx, sql, args \\ nil) do
 		# Connection.query returns {result, conn} for the pool
 		# we only care about the result
 		tx.conn |> Connection.query(sql, args) |> elem(0)
 	end
 
+	@doc """
+	Commits the transaction
+	"""
 	def commit(tx) do
 		conn = tx.conn
 		with :ok, Writer.query(conn, "commit"),
-		     {:ok, "&4 t\n"} <- Reader.message(conn)
+		     {:ok, "&4 t\n"} <- Reader.message(conn) # make sure auto-commit is turned back on
 		do
 			:ok
 		else
@@ -35,6 +35,9 @@ defmodule Monet.Transaction do
 		end
 	end
 
+	@doc """
+	Rollsback the transaction
+	"""
 	def rollback(tx) do
 		conn = tx.conn
 		with :ok, Writer.query(conn, "rollback"),
