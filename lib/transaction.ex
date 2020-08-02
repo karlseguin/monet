@@ -5,7 +5,6 @@ defmodule Monet.Transaction do
 
 	require Record
 
-	alias __MODULE__
 	alias Monet.{Connection, Error, Prepared, Reader, Writer}
 
 	Record.defrecord(:transaction, conn: nil, ref: nil, pool_name: nil)
