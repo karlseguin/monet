@@ -4,9 +4,11 @@ Warning: Early development.
 
 ## Usage
 
-~~In your mix.exs file, add the project dependency:~~
+In your mix.exs file, add the project dependency:
 
-NOTE: The package isn't currently available on Hex. Waiting for https://github.com/dashbitco/nimble_pool/issues/10 to be resolved.
+```
+{:monet, "~> 0.0.1"}
+```
 
 You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
 
