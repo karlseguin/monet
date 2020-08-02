@@ -48,9 +48,11 @@ defmodule Monet do
 	other functions in this module.
 	"""
 	def start_link(opts) do
-		{name, opts} = Keyword.pop(opts, :name, __MODULE__)
+		{name, opts} = case Keyword.get(opts, :name) do
+			nil -> {__MODULE__, Keyword.put(opts, :name, __MODULE__)}
+			name -> {name, opts}
+		end
 		{pool_size, opts} = Keyword.pop(opts, :pool_size, 10)
-
 		p = pool(failures: 0, config: opts)
 		child = {NimblePool, worker: {Monet, p}, pool_size: pool_size, name: name}
 		Supervisor.start_link([child], strategy: :one_for_one)
@@ -65,10 +67,10 @@ defmodule Monet do
 	def query(sql), do: query(__MODULE__, sql, nil)
 	def query(pool, sql) when is_atom(pool) or is_pid(pool), do: query(pool, sql, nil)
 
-	def query(%Transaction{} = tx, sql), do: query(tx, sql, nil)
+	def query(tx, sql) when elem(tx, 0) == :transaction, do: query(tx, sql, nil)
 	def query(sql, args), do: query(__MODULE__, sql, args)
 
-	def query(%Transaction{} = tx, sql, args), do: Transaction.query(tx, sql, args)
+	def query(tx, sql, args) when elem(tx, 0) == :transaction, do: Transaction.query(tx, sql, args)
 
 	def query(pool, sql, args) do
 		NimblePool.checkout!(pool, :checkout, fn _from, conn ->
@@ -175,6 +177,36 @@ defmodule Monet do
 	end
 
 	@doc """
+	Creates a prepared statement for use in a transaction. The statements are
+	automatically cleaned up at the end of the transaction.
+
+	Use with care. MonetDB automatically deallocates prepared statements on
+	execution error. If a query using a prepared statement fails in your transaction
+	you should probably end the transaction.
+
+			Monet.transaction(fn tx ->
+				Monet.prepare(tx, :test_insert, "insert into test (id) values (?)")
+				with {:ok, r1} <- Monet.query(tx, :test_insert, [1]),
+				     {:ok, r2} <- Monet.query(tx, :test_insert, [2])
+				do
+					{:ok, [r1, r2]}
+				else
+					err -> {:rollback, err}
+				end
+			end)
+	"""
+	def prepare(tx, name, sql) when elem(tx, 0) == :transaction do
+		Transaction.prepare(tx, name, sql)
+	end
+
+	def prepare!(tx, name, sql) when elem(tx, 0) == :transaction do
+		case prepare(tx, name, sql) do
+			:ok -> :ok
+			{:error, err} -> raise err
+		end
+	end
+
+	@doc """
 	By default, the `Monet.Result` returned from a select will enumerate a list of
 	lists (via the Enumerable protocol or Jason.encode).
 
@@ -206,6 +238,13 @@ defmodule Monet do
 	def as_map({:ok, %Result{} = result}, opts), do: as_map(result, opts)
 	def as_map(%Result{} = result, opts), do: Result.as_map(result, opts)
 	def as_map(error, _opts), do: error
+
+	@impl NimblePool
+	def init_pool(state) do
+		name = Keyword.fetch!(pool(state, :config), :name)
+		:ets.new(name, [:set, :public, :named_table])
+		{:ok, state}
+	end
 
 	@impl NimblePool
 	def init_worker(state) do

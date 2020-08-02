@@ -14,6 +14,7 @@ defmodule Monet.Connection do
 
 	Record.defrecord(:connection,
 		socket: nil,
+		pool_name: nil,
 		read_timeout: 10_000,
 		send_timeout: 10_000,
 		connect_timeout: 10_000
@@ -76,38 +77,42 @@ defmodule Monet.Connection do
 		with :ok <- Writer.query(conn, "start transaction"),
 		     {:ok, _} <- Reader.result(conn)
 		do
-			{result, value} = case fun.(tx) do
-				{:rollback, value} -> {Transaction.rollback(tx), {:error, value}}
-				value -> {Transaction.commit(tx), value}
-			end
+			try do
+				{result, value} = case fun.(tx) do
+					{:rollback, value} -> {Transaction.rollback(tx), {:error, value}}
+					value -> {Transaction.commit(tx), value}
+				end
 
-			# If the commit or rollback's failed, we'll still return the result, but
-			# we may need to remove this connection from the pool
-			conn =
-			with {:error, err} <- result,
-			     true <- Error.closed?(err)
-			do
-				nil
-			else
-				_ -> conn
-			end
+				# If the commit or rollback's failed, we'll still return the result, but
+				# we may need to remove this connection from the pool
+				conn =
+				with {:error, err} <- result,
+				     true <- Error.closed?(err)
+				do
+					nil
+				else
+					_ -> conn
+				end
 
-			# Since we allow the transaction to be controlled by the value `fun` returns
-			# we need to clean it up a little
-			value = case value do
-				{:ok, _value} = ok -> ok
-				{:error, _value} = err -> err
-				{:commit, value} -> {:ok, value}
-				value -> {:ok, value}
-			end
+				# Since we allow the transaction to be controlled by the value `fun` returns
+				# we need to clean it up a little
+				value = case value do
+					{:ok, _value} = ok -> ok
+					{:error, _value} = err -> err
+					{:commit, value} -> {:ok, value}
+					value -> {:ok, value}
+				end
 
-			{value, conn}
+				{value, conn}
+			after
+				Transaction.close(tx) # deallocate any prepared statements
+			end
 		end
 	end
 
 	@doc """
 	Connects to the MonetDB server. See Monet.start_link/1 for available options
-	(although some of the options listed there such as `pool_size` and `name` are
+	(although some of the options listed there such as `pool_size` are
 	specific to the Monet pool and not this individual connection).
 	"""
 	def connect(opts) do
@@ -165,6 +170,7 @@ defmodule Monet.Connection do
 	end
 
 	defp authenticate(socket, opts) do
+		pool_name = Keyword.get(opts, :pool_name, Monet)
 		send_timeout = Keyword.get(opts, :send_timeout, 10_000)
 		read_timeout = Keyword.get(opts, :read_timeout, 10_000)
 		connect_timeout = Keyword.get(opts, :connect_timeout, 10_000)
@@ -175,6 +181,7 @@ defmodule Monet.Connection do
 
 		conn = connection(
 			socket: socket,
+			pool_name: pool_name,
 			send_timeout: send_timeout,
 			read_timeout: read_timeout,
 			connect_timeout: connect_timeout
@@ -234,4 +241,9 @@ defmodule Monet.Connection do
 			host -> String.to_charlist(host)
 		end
 	end
+
+	@doc """
+	Get the name of the pool this connection belongs tos
+	"""
+	def pool_name(conn), do: connection(conn, :pool_name)
 end

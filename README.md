@@ -7,7 +7,7 @@ Warning: Early development.
 In your mix.exs file, add the project dependency:
 
 ```
-{:monet, "~> 0.0.1"}
+{:monet, "~> 0.0.2"}
 ```
 
 You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
@@ -73,4 +73,18 @@ The supplied function can return `{:rollback, value}` to rollback the transactio
 ## Prepared Statements
 Any calls to `query` which passes arguments will use a prepared statement.
 
-A future version may introduced a prepared statement cache within transactions. A global prepared statement cache is unlikely to be implemented however.
+Special handling of prepared within a transaction is available via. Using `Monet.prepare/3`, prepared statements can be registered with a given name and re-used. At the end of the transaction, the prepared statements are automatically deallocated.
+
+```elixir
+Monet.transaction(fn tx ->
+  Monet.prepare(tx, :test_insert, "insert into test (id) values (?)")
+  with {:ok, r1} <- Monet.query(tx, :test_insert, [1]),
+       {:ok, r2} <- Monet.query(tx, :test_insert, [2])
+  do
+    {:ok, [r1, r2]}
+  else
+    err -> {:rollback, err}
+  end
+end)```
+
+Keep in mind that MonetDB automatically deallocates prepared statements on execution error. This is why having automatically management of prepared statements at the transaction level makes sense (since a failure to execute probably means the transaction ends). It's much more complicated at the connection level (especially when you add the indirection of the pool).
