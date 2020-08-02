@@ -242,6 +242,7 @@ defmodule Monet do
 	@impl NimblePool
 	def init_pool(state) do
 		name = Keyword.fetch!(pool(state, :config), :name)
+		# table is used by the transaction prepared statement cache
 		:ets.new(name, [:set, :public, :named_table])
 		{:ok, state}
 	end
