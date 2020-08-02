@@ -34,9 +34,9 @@ defmodule Monet.MixProject do
 		[
 			{:jason, "~> 1.2.1"},
 			{:decimal, "~> 1.8.1"},
+			{:nimble_pool, "~> 0.2.0"},
 			{:nimble_parsec, "~> 0.6.0"},
 			{:ex_doc, "~> 0.21.2", only: :dev, runtime: false},
-			{:nimble_pool, git: "https://github.com/dashbitco/nimble_pool.git", tag: "38800ef31ef07872f3d32fe163bd37ff93046d70"}
 		]
 	end
 end
