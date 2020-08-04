@@ -78,32 +78,33 @@ defmodule Monet.Connection do
 		     {:ok, _} <- Reader.result(conn)
 		do
 			try do
-				{result, value} = case fun.(tx) do
-					{:rollback, value} -> {Transaction.rollback(tx), {:error, value}}
-					value -> {Transaction.commit(tx), value}
+				fun_result = fun.(tx)
+
+				# commit/rollback result
+				crb_result = case fun_result do
+					{:rollback, _} -> Transaction.rollback(tx)
+					_ -> Transaction.commit(tx)
 				end
 
-				# If the commit or rollback's failed, we'll still return the result, but
-				# we may need to remove this connection from the pool
-				conn =
-				with {:error, err} <- result,
-				     true <- Error.closed?(err)
-				do
-					nil
-				else
-					_ -> conn
+				case crb_result do
+					# If the commit/rollback failed, this is the result we'll return
+					# plus we might need to close the connection
+					{:error, err} ->
+						conn = if Error.closed?(err), do: nil, else: conn
+						{crb_result, conn}
+					:ok ->
+						# If the commit/rollback succeeded, we need to clean up the value
+						# returned by the supplied fun and we know we don't need to close
+						# the connection
+						value = case fun_result do
+							{:ok, _} = ok -> ok
+							{:error, _} = err -> err
+							{:rollback, _} = rlb -> rlb
+							{:commit, value} -> {:ok, value}
+							value -> {:ok, value}
+						end
+						{value, conn}
 				end
-
-				# Since we allow the transaction to be controlled by the value `fun` returns
-				# we need to clean it up a little
-				value = case value do
-					{:ok, _value} = ok -> ok
-					{:error, _value} = err -> err
-					{:commit, value} -> {:ok, value}
-					value -> {:ok, value}
-				end
-
-				{value, conn}
 			after
 				Transaction.close(tx) # deallocate any prepared statements
 			end

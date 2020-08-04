@@ -68,7 +68,12 @@ Monet.transaction(fn tx ->
 end)
 ```
 
-The supplied function can return `{:rollback, value}` to rollback the transaction. In such cases, `{:error, value}` will be returned.
+The function you provide can return:
+
+* `{:rollback, value}` - to rollback the transaction and return the same 2-value tuple
+* `{:commit, value}` - to commit the transaction and return `{:ok, value}`
+* `{:ok, value}` - to commit the transaction and return `{:ok, value}`
+* `value` - to commit the transaction and return `{:ok, value}`
 
 ## Prepared Statements
 Any calls to `query` which passes arguments will use a prepared statement.

@@ -22,11 +22,10 @@ defmodule Monet.Tests.Transaction do
 	test "rollback" do
 		Monet.query!("truncate table tx_test")
 
-		assert {:error, result} = Monet.transaction(fn tx ->
+		assert {:rollback, "fail"} = Monet.transaction(fn tx ->
 			Monet.query(tx, "insert into tx_test values (?)", 3)
 			{:rollback, "fail"}
 		end)
-		assert result == "fail"
 		assert Monet.query!("select * from tx_test").rows == []
 	end
 
@@ -59,5 +58,42 @@ defmodule Monet.Tests.Transaction do
 		assert Monet.query!(:transaction_test, "select * from sys.prepared_statements").row_count == 0
 		assert Monet.query!(:transaction_test, "select * from tx_test order by id").rows == [[1], [2], [3]]
 		GenServer.stop(:transaction_test)
+	end
+
+	test "returns commit error" do
+
+		wait = fn ->
+			receive do
+				data -> data
+			after
+				100 -> raise "nothing received"
+			end
+		end
+
+		pid = self()
+		fun = fn id ->
+			result = Monet.transaction(fn tx ->
+				wait.()
+				Monet.query!(tx, "insert into tx_test (id) values (1)")
+				wait.()
+			end)
+			send(pid, {id, result})
+		end
+
+		p1 = spawn fn -> fun.(1) end
+		p2 = spawn fn -> fun.(2) end
+		send(p1, :ok)
+		send(p2, :ok)
+		send(p1, :ok)
+
+		assert wait.() == {1, {:ok, :ok}}
+		send(p2, :ok)
+		assert wait.() == {2, {:error, %Monet.Error{
+			code: 40000,
+			details: nil,
+			message: "COMMIT: transaction is aborted because of concurrency conflicts, will ROLLBACK instead\n",
+			source: :monetd
+		}}}
+
 	end
 end

@@ -71,7 +71,6 @@ defmodule Monet do
 	def query(sql, args), do: query(__MODULE__, sql, args)
 
 	def query(tx, sql, args) when elem(tx, 0) == :transaction, do: Transaction.query(tx, sql, args)
-
 	def query(pool, sql, args) do
 		NimblePool.checkout!(pool, :checkout, fn _from, conn ->
 			Connection.query(conn, sql, args)
@@ -83,7 +82,16 @@ defmodule Monet do
 	"""
 	def query!(sql), do: query!(__MODULE__, sql, nil)
 	def query!(pool, sql) when is_atom(pool) or is_pid(pool), do: query!(pool, sql, nil)
+
+	def query!(tx, sql) when elem(tx, 0) == :transaction, do: query!(tx, sql, nil)
 	def query!(sql, args), do: query!(__MODULE__, sql, args)
+
+	def query!(tx, sql, args) when elem(tx, 0) == :transaction do
+		case Transaction.query(tx, sql, args) do
+			{:ok, result} -> result
+			{:error, err} -> raise err
+		end
+	end
 	def query!(pool, sql, args) do
 		case query(pool, sql, args) do
 			{:ok, result} -> result
