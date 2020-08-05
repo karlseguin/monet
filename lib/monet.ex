@@ -237,7 +237,7 @@ defmodule Monet do
 	`as_map` works on any value returned by `query` and `query!`. In the case of an
 	error, the error is simply returned. As such, a safer usage would be:
 
-		case Monet.at_map(Monet.query("select id, name from saiyans")) do
+		case Monet.as_map(Monet.query("select id, name from saiyans")) do
 			{:ok, result} -> ...
 			{:error, err} -> ...
 		end

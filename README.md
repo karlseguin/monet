@@ -7,7 +7,7 @@ Warning: Early development.
 In your mix.exs file, add the project dependency:
 
 ```
-{:monet, "~> 0.0.2"}
+{:monet, "~> 0.0.3"}
 ```
 
 You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
@@ -43,22 +43,39 @@ You can optionally use the `query!` variant.
 When you create the pool, you have the option of providing a `name` This is useful in the case where you want to connect to multiple instances:
 
  ```elixir
- opts = [
-    pool_size: 10,
-    ...
-    name: :cache
+opts = [
+  pool_size: 10,
+  ...
+  name: :replica
 ]
 ```
 
 When a named pool is used, the `query/2` and `query/3` functions must be used:
 
 ```elixir
-{:ok, result} = Monet.query(:cache, "create table atreides(name text)")
-{:ok, result} = Monet.query(:cache, "insert into attreides (name) values (?)", ["Paul"])
+{:ok, result} = Monet.query(:replica, "create table atreides(name text)")
+{:ok, result} = Monet.query(:replica, "insert into atreides (name) values (?)", ["Paul"])
 ```
 
-## Transactions
+## Results
+On success, a `Monet.Result` structure is returned. The `rows` field exposes a list of list.
 
+`Monet.Result` also implements the Enumerable and Jason.Encoder protocols. By default, these simply enumerate or render `rows` as a list of lists. However, `Monet.as_map/1` can be used to change this behavior to iterate over a list of maps.
+
+```elixir
+case Monet.as_map(Monet.query("select id, name from saiyans")) do
+  {:ok, result} -> ...
+  {:error, err} -> ...
+end
+```
+
+`as_map/1` is safe to chain with `Monet.query` as it will return any `{:error, _}` structure passed to it as-is.
+
+Note that `result.rows` does not change. It continues to be a listof lists. What does change is the Enumerable and Jason encoding behavior.
+
+Optionally, `columns: :atoms` can be passed to `as_map`.
+
+## Transactions
 `Monet.transaction/1` and `Monet.transaction/2` (for named pools) can be used to wrap code in a transaction:
 
 ```elixir
@@ -90,6 +107,7 @@ Monet.transaction(fn tx ->
   else
     err -> {:rollback, err}
   end
-end)```
+end)
+```
 
 Keep in mind that MonetDB automatically deallocates prepared statements on execution error. This is why having automatically management of prepared statements at the transaction level makes sense (since a failure to execute probably means the transaction ends). It's much more complicated at the connection level (especially when you add the indirection of the pool).
