@@ -286,6 +286,7 @@ defmodule Monet do
 	end
 
 	@impl NimblePool
+	def terminate_worker(_reason, nil, pool_state), do: {:ok, pool_state}
 	def terminate_worker(_reason, conn, pool_state) do
 		Connection.close(conn)
 		{:ok, pool_state}

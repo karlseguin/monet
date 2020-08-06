@@ -7,7 +7,7 @@ Warning: Early development.
 In your mix.exs file, add the project dependency:
 
 ```
-{:monet, "~> 0.0.4"}
+{:monet, "~> 0.0.5"}
 ```
 
 You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
