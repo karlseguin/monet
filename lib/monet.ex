@@ -40,6 +40,8 @@ defmodule Monet do
 	* `:password` - Password to use (default: "monetdb")
 	* `:pool_size` - Size of the conncetion pool (default: 10)
 	* `:port` - Port of the server to connect to (default: 50_000)
+	* `:schema` - The schema to use (defautls to not sending a 'set schema' command (and thus defaults to the user's defautl schema))
+	* `:role` - The role to use (defautls to not sending a 'set role' command (and thus defaults to the user's defautl role))
 	* `:read_timeout` - Timeout, in milliseconds, for individual tcp recv operations (default: 10_000)
 	* `:send_timeout` - Timeout, in milliseconds, for individual tcp send operatins (default: 10_000)
 	* `:username` - Username to use (default: "monetdb")

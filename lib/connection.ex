@@ -202,7 +202,9 @@ defmodule Monet.Connection do
 	# there are some commands we want to send on startup
 	defp configure(conn, opts) do
 		with {:ok, conn} <- set_time_zone(conn, opts),
-		     {:ok, conn} <- set_reply_size(conn)
+		     {:ok, conn} <- set_reply_size(conn),
+		     {:ok, conn} <- set_schema(conn, opts),
+		     {:ok, conn} <- set_role(conn, opts)
 		do
 			{:ok, conn}
 		end
@@ -218,7 +220,7 @@ defmodule Monet.Connection do
 		Writer.query(conn, "set time zone interval '#{offset}' minute;")
 		case Reader.message(conn) do
 			{:ok, <<"&3 ", _::binary>>} -> {:ok, conn}
-			{:ok, invalid} -> {:error, "Unexpected reply from set time zone command: #{invalid}"}
+			{:ok, invalid} -> {:error, "Unexpected reply from set time zone: #{invalid}"}
 			err -> err
 		end
 	end
@@ -231,6 +233,32 @@ defmodule Monet.Connection do
 			{:ok, ""} -> {:ok, conn}
 			{:ok, invalid} -> {:error, "Unexpected reply from reply_size command: #{invalid}"}
 			err -> err
+		end
+	end
+
+	defp set_schema(conn, opts) do
+		case Keyword.get(opts, :schema) do
+			nil -> {:ok, conn}
+			schema ->
+				Writer.query(conn, "set schema #{schema}")
+				case Reader.message(conn) do
+					{:ok, <<"&3 ", _::binary>>} -> {:ok, conn}
+					{:ok, invalid} -> {:error, "Unexpected reply from set schema: #{invalid}"}
+					err -> err
+				end
+		end
+	end
+
+	defp set_role(conn, opts) do
+		case Keyword.get(opts, :role) do
+			nil -> {:ok, conn}
+			role ->
+				Writer.query(conn, "set role #{role}")
+				case Reader.message(conn) do
+					{:ok, <<"&3 ", _::binary>>} -> {:ok, conn}
+					{:ok, invalid} -> {:error, "Unexpected reply from set role: #{invalid}"}
+					err -> err
+				end
 		end
 	end
 

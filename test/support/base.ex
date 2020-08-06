@@ -31,6 +31,8 @@ defmodule Monet.Tests.Base do
 			username: "monetdb",
 			password: "monetdb",
 			database: "elixir_test",
+			schema: "sys",
+			role: "monetdb"
 		], opts)
 
 		{:ok, _} = Monet.start_link(opts)

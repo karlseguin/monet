@@ -7,7 +7,7 @@ Warning: Early development.
 In your mix.exs file, add the project dependency:
 
 ```
-{:monet, "~> 0.0.3"}
+{:monet, "~> 0.0.4"}
 ```
 
 You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
@@ -22,7 +22,7 @@ opts = [
     database: "monetdb",
     read_timeout: 10_000,
     send_timeout: 10_000,
-    connect_timeout: 10_000
+    connect_timeout: 10_000,
 ]
 children = [
   ...
