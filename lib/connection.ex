@@ -171,7 +171,7 @@ defmodule Monet.Connection do
 	end
 
 	defp authenticate(socket, opts) do
-		pool_name = Keyword.get(opts, :pool_name, Monet)
+		pool_name = Keyword.get(opts, :name, Monet)
 		send_timeout = Keyword.get(opts, :send_timeout, 10_000)
 		read_timeout = Keyword.get(opts, :read_timeout, 10_000)
 		connect_timeout = Keyword.get(opts, :connect_timeout, 10_000)

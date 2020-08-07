@@ -7,7 +7,7 @@ Warning: Early development.
 In your mix.exs file, add the project dependency:
 
 ```
-{:monet, "~> 0.0.5"}
+{:monet, "~> 0.0.6"}
 ```
 
 You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
@@ -95,7 +95,7 @@ The function you provide can return:
 ## Prepared Statements
 Any calls to `query` which passes arguments will use a prepared statement.
 
-Special handling of prepared within a transaction is available via. Using `Monet.prepare/3`, prepared statements can be registered with a given name and re-used. At the end of the transaction, the prepared statements are automatically deallocated.
+Special handling of prepared within a transaction is available. Using `Monet.prepare/3`, prepared statements can be registered with a given name and re-used. At the end of the transaction, the prepared statements are automatically deallocated.
 
 ```elixir
 Monet.transaction(fn tx ->
