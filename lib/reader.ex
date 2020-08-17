@@ -166,7 +166,8 @@ defmodule Monet.Reader do
 	defp parse_row([type], <<data::binary>>, row) do
 		case parse_value(type, data) do
 			{:ok, <<"\t]\n", rest::binary>>, value} -> {:ok, rest, Enum.reverse([value | row])}
-			{:ok, _, _} -> {:error, Error.new(:driver, "unvalid row terminator", data)}
+			{:ok, {:text, <<"]\n", rest::binary>>}, value} -> {:ok, rest, Enum.reverse([value | row])}
+			{:ok, _, _} -> {:error, Error.new(:driver, "invalid row terminator", data)}
 			err -> err
 		end
 	end
@@ -174,6 +175,7 @@ defmodule Monet.Reader do
 	defp parse_row([type | types], <<data::binary>>, row) do
 		case parse_value(type, data) do
 			{:ok, <<",\t", rest::binary>>, value} -> parse_row(types, rest, [value | row])
+			{:ok, {:text, <<rest::binary>>}, value} -> parse_row(types, rest, [value | row])
 			{:ok, _, _value} -> {:error, Error.new(:driver, "invalid value separator", data)}
 			err -> err
 		end
@@ -209,8 +211,14 @@ defmodule Monet.Reader do
 
 	@string_types [:char, :varchar, :clob, :text, :json]
 	defp parse_value(type, <<?", data::binary>>) when type in @string_types do
-		{iolist, rest} = parse_string(data)
-		{:ok, rest, :erlang.iolist_to_binary(iolist)}
+		# Unlike the other functions, this actually strips out the trailing delimiter
+		# (the "\t" or ",\t" depending on if it's the last column or not).
+		# This breaks a lot of our parsing since we expect "rest" to not be consumed.
+		# To solve this, and to avoid re-concatenating the separator, we return a special
+		# "rest" of {:text, rest} which the other parses can special case.
+
+		[string, rest] = :binary.split(data, "\t")
+		{:ok, {:text, rest}, string |> parse_string() |> :erlang.iolist_to_binary()}
 	end
 
 	defp parse_value(type, invalid) when type in @string_types do
@@ -305,22 +313,27 @@ defmodule Monet.Reader do
 	defp token_length(<<?\t, _rest::binary>>, len), do: len
 	defp token_length(<<_, rest::binary>>, len), do: token_length(rest, len + 1)
 
-	@escapes [
-		{"\\e", "\e"}, {"\\f", "\f"}, {"\\n", "\n"}, {"\\r", "\r"},
-		{"\\t", "\t"}, {"\\v", "\v"}, {"\\\\", "\\"}, {"\\'", "\'"}, {"\\\"", "\""}
-	]
-	for {escape, c} <- @escapes do
-		defp parse_string(unquote(escape) <> rest) do
-			{acc, rest} = parse_string(rest)
-			{[unquote(c), acc], rest}
+	defp parse_string(data, acc \\ []) do
+		case :binary.split(data, "\\") do
+			[text, <<?e, rest::binary>>] -> parse_string(rest, [acc, text, ?\e])
+			[text, <<?f, rest::binary>>] -> parse_string(rest, [acc, text, ?\f])
+			[text, <<?n, rest::binary>>] -> parse_string(rest, [acc, text, ?\n])
+			[text, <<?r, rest::binary>>] -> parse_string(rest, [acc, text, ?\r])
+			[text, <<?t, rest::binary>>] -> parse_string(rest, [acc, text, ?\t])
+			[text, <<?v, rest::binary>>] -> parse_string(rest, [acc, text, ?\v])
+			[text, <<?\\, rest::binary>>] -> parse_string(rest, [acc, text, ?\\])
+			[text, <<?', rest::binary>>] -> parse_string(rest, [acc, text, ?'])
+			[text, <<?", rest::binary>>] -> parse_string(rest, [acc, text, ?"])
+			[text] ->
+				# The last chunk can be terminated with either '"' or '",' depending
+				# on whether or not it's the last column. Strip it either way.
+				len1 = byte_size(text) - 1
+				len2 = len1 - 1
+				case text do
+					<<text::bytes-size(len1), ?">> -> [acc, text]
+					<<text::bytes-size(len2), ~s(",)>> -> [acc, text]
+				end
 		end
-	end
-
-	defp parse_string(<<?", rest::binary>>), do: {[], rest}
-
-	defp parse_string(<<c, rest::binary>>) do
-		{acc, rest} = parse_string(rest)
-		{[c, acc], rest}
 	end
 
 	defp build_time([hour, minute, seconds]) do
