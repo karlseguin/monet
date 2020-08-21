@@ -7,7 +7,7 @@ Warning: Early development.
 In your mix.exs file, add the project dependency:
 
 ```
-{:monet, "~> 0.0.7"}
+{:monet, "~> 0.0.8"}
 ```
 
 You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
@@ -74,6 +74,24 @@ end
 Note that `result.rows` does not change. It continues to be a listof lists. What does change is the Enumerable and Jason encoding behavior.
 
 Optionally, `columns: :atoms` can be passed to `as_map`.
+
+
+### Result Helpers
+`Monet.rows/1`, `Monet.rows!/1`, `Monet.row/1`, Monet.row!/1`, Monet.scalar/1`, `Monet.scalar!/1`, `Monet.map!/2` and `Monet.maps!/2` are all helpers that can help to turn a Result into more concrete structures.
+
+They're safe to use even if `Monet.query` returns an error (they simply return the error).
+
+```elixir
+with {:ok, [a, b]} <- Monet.row(Monet.query("select 1, 2")) do
+  ...
+end
+```
+
+`row`, and `map` return an error if more the result has more than 1 row (the `row!` and `map!` variants raise). They return `nil` if there are no rows.
+
+`scalar` and `scalar!` behaves the same, but also returns/raises if more there is more than 1 column.
+
+`map`, `map!`, `maps` and `maps!` accepts a second optional parameter, `columns: :atoms`.
 
 ## Transactions
 `Monet.transaction/1` and `Monet.transaction/2` (for named pools) can be used to wrap code in a transaction:

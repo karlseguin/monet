@@ -6,6 +6,11 @@ defmodule Monet.Error do
 	In such cases the `code` field should be the integer code returned (though it
 	could be `nil` in the unlikely case that the error couldn't be parsed properly).
 
+	The `source` field is `client` when Monet.row, Monet.row!, Monet.map,
+	Monet.map!, Monet.scalar or Monet.scalar! are called on a result with more
+	rows or columns than is expected (e.g., calling Monet.scalar on a result that
+	has more than 1 row or more than 1 column).Monet
+
 	Otherwise the `source` field can be either `:tcp` or `:driver` to indicate a
 	tcp-level error or an error arising from this library. In both cases, `code`
 	will always be nil.

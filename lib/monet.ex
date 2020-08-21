@@ -245,9 +245,87 @@ defmodule Monet do
 		end
 	"""
 	def as_map(value, opts \\ [])
-	def as_map({:ok, %Result{} = result}, opts), do: as_map(result, opts)
-	def as_map(%Result{} = result, opts), do: Result.as_map(result, opts)
+	def as_map({:ok, result}, opts), do: Result.as_map(result, opts)
+	def as_map(%Result{} = result, opts), do: as_map({:ok, result}, opts)
 	def as_map(error, _opts), do: error
+
+	# can't fail, but prove a ! variant for consistency
+	def rows({:ok, result}), do: {:ok, result.rows}
+	def rows(%Result{} = result), do: {:ok, result.rows}
+	def rows(error), do: error
+	def rows!({:ok, result}), do: result.rows
+	def rows!(%Result{} = result), do: result.rows
+	def rows!({:error, err}), do: raise err
+
+	def row({:ok, result}) do
+		case result.rows do
+			[] -> {:ok, nil}
+			[row] -> {:ok, row}
+			_ -> {:error, Monet.Error.new(:client, "row called but multiple rows returned")}
+		end
+	end
+	def row(%Result{} = result), do: row({:ok, result})
+	def row(error), do: error
+	def row!({:ok, _} = result), do: unwrap!(row(result))
+	def row!(%Result{} = result), do: unwrap!(row({:ok, result}))
+	def row!({:error, err}), do: raise err
+
+	def maps(input, opts \\ [])
+	def maps({:ok, result}, opts) do
+		{:ok, result |> as_map(opts) |> Enum.to_list()}
+	end
+	def maps(%Result{} = result, opts), do: maps({:ok, result}, opts)
+	def maps(error, _opts), do: error
+
+	def maps!(input, opts \\ [])
+	def maps!({:ok, _} = result, opts), do: result |> as_map(opts) |> Enum.to_list()
+	def maps!(%Result{} = result, opts), do: maps!({:ok, result}, opts)
+	def maps!({:error, err}, _opts), do: raise err
+
+	def map(input, opts \\ [])
+	def map({:ok, result}, opts) do
+		case result.rows do
+			[] -> {:ok, nil}
+			[row] ->
+				row = result.columns
+				|> columns_for_map(opts)
+				|> Enum.zip(row)
+				|> Map.new()
+				{:ok, row}
+			_ -> {:error, Monet.Error.new(:client, "map called but multiple rows returned")}
+		end
+	end
+	def map(%Result{} = result, opts), do: map({:ok, result}, opts)
+	def map(error, _opts), do: error
+
+	def map!(input, opts \\ [])
+	def map!({:ok, _} = result, opts), do: unwrap!(map(result, opts))
+	def map!(%Result{} = result, opts), do: unwrap!(map({:ok, result}, opts))
+	def map!({:error, err}, _opts), do: raise err
+
+	def scalar({:ok, result}) do
+		case result.rows do
+			[] -> {:ok, nil}
+			[[value]] -> {:ok, value}
+			[_, _ | _] -> {:error, Monet.Error.new(:client, "scalar called but multiple rows returned")}
+			_ -> {:error, Monet.Error.new(:client, "scalar called but multiple columns returned")}
+		end
+	end
+	def scalar(%Result{} = result), do: scalar({:ok, result})
+	def scalar(error), do: error
+	def scalar!({:ok, _} = result), do: unwrap!(scalar(result))
+	def scalar!(%Result{} = result), do: unwrap!(scalar({:ok, result}))
+	def scalar!({:error, err}), do: raise err
+
+	defp unwrap!({:ok, result}), do: result
+	defp unwrap!({:error, err}), do: raise err
+
+	defp columns_for_map(columns, opts) do
+		case opts[:columns] do
+			:atoms -> Enum.map(columns, &String.to_atom/1)
+			_ -> columns
+		end
+	end
 
 	@impl NimblePool
 	def init_pool(state) do
