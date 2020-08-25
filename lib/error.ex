@@ -55,7 +55,7 @@ defmodule Monet.Error do
 	end
 
 	@doc false
-	def closed?(%{source: :tcp, message: message}) when message in [:closed, :enotconn], do: true
+	def closed?(%{source: :tcp}), do: true
 	def closed?(_), do: false
 
 	defp details(nil), do: []

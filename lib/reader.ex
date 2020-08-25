@@ -109,11 +109,11 @@ defmodule Monet.Reader do
 		raise "QBLOCK result parsing not implemented"
 	end
 
-	defp parse_result(unknown, _conn) do
+	defp parse_result(<<unknown::binary>>, _conn) do
 		{:error, Error.new(:driver, "unknown query result", unknown)}
 	end
 
-	defp parse_result_types(types) do
+	defp parse_result_types(<<types::binary>>) do
 		l = byte_size(types) - 9
 		case types do
 			<<"% ", types::bytes-size(l), " # type">> -> {:ok, types |> String.split(",\t") |> Enum.map(&String.to_atom/1)}
@@ -121,7 +121,7 @@ defmodule Monet.Reader do
 		end
 	end
 
-	defp parse_result_header(header) do
+	defp parse_result_header(<<header::binary>>) do
 		with [_query_id, rest] <- :binary.split(header, " "),
 				 {row_count, _} <- Integer.parse(rest)
 		do
@@ -131,7 +131,7 @@ defmodule Monet.Reader do
 		end
 	end
 
-	defp parse_result_columns(columns) do
+	defp parse_result_columns(<<columns::binary>>) do
 		l = byte_size(columns) - 9
 		case columns do
 			<<"% ", columns::bytes-size(l), " # name">> -> {:ok, String.split(columns, ",\t")}
@@ -139,13 +139,13 @@ defmodule Monet.Reader do
 		end
 	end
 
-	defp parse_result_rows(0, _types, _data), do: {:ok, []}
+	defp parse_result_rows(0, _types, <<_data::binary>>), do: {:ok, []}
 
-	defp parse_result_rows(_row_count, types, data) do
+	defp parse_result_rows(_row_count, types, <<data::binary>>) do
 		do_parse_result_rows(types, data, [])
 	end
 
-	defp do_parse_result_rows(types, data, acc) do
+	defp do_parse_result_rows(types, <<data::binary>>, acc) do
 		case parse_row(types, data) do
 			{:ok, "", row} -> {:ok, Enum.reverse([row | acc])}
 			{:ok, rest, row} -> do_parse_result_rows(types, rest, [row | acc])
@@ -158,7 +158,7 @@ defmodule Monet.Reader do
 		parse_row(types, data, [])
 	end
 
-	defp parse_row(_types, data) do
+	defp parse_row(_types, <<data::binary>>) do
 		{:error, Error.new(:driver, "invalid row prefix", data)}
 	end
 
@@ -183,21 +183,21 @@ defmodule Monet.Reader do
 
 	defp parse_value(_type, <<"NULL", rest::binary>>), do: {:ok, rest, nil}
 
-	defp parse_value(type, data) when type in [:int, :tinyint, :bigint, :hugeint, :oid, :smallint, :serial] do
+	defp parse_value(type, <<data::binary>>) when type in [:int, :tinyint, :bigint, :hugeint, :oid, :smallint, :serial] do
 		case Integer.parse(data) do
 			{value, rest} -> {:ok, rest, value}
 			:error -> {:error, Error.new(:driver, "invalid integer", data)}
 		end
 	end
 
-	defp parse_value(type, data) when type in [:double, :float, :real] do
+	defp parse_value(type, <<data::binary>>) when type in [:double, :float, :real] do
 		case Float.parse(data) do
 			{value, rest} -> {:ok, rest, value}
 			:error -> {:error, Error.new(:driver, "invalid float", data)}
 		end
 	end
 
-	defp parse_value(:decimal, data) do
+	defp parse_value(:decimal, <<data::binary>>) do
 		{value, rest} = extract_token(data)
 		case Decimal.parse(value) do
 			{:ok, value} -> {:ok, rest, value}
@@ -221,7 +221,7 @@ defmodule Monet.Reader do
 		{:ok, {:text, rest}, string |> parse_string() |> :erlang.iolist_to_binary()}
 	end
 
-	defp parse_value(type, invalid) when type in @string_types do
+	defp parse_value(type, <<invalid::binary>>) when type in @string_types do
 		{:error, Error.new(:driver, "invalid string prefix", invalid)}
 	end
 
@@ -229,7 +229,7 @@ defmodule Monet.Reader do
 		{:ok, rest, uuid}
 	end
 
-	defp parse_value(:blob, data) do
+	defp parse_value(:blob, <<data::binary>>) do
 		{value, rest} = extract_token(data)
 		case Base.decode16(value) do
 			{:ok, value} -> {:ok, rest, value}
@@ -237,7 +237,7 @@ defmodule Monet.Reader do
 		end
 	end
 
-	defp parse_value(:time, data) do
+	defp parse_value(:time, <<data::binary>>) do
 		with {:ok, data, rest, _, _, _} <- extract_time(data),
 				 {:ok, time} <- build_time(data)
 		do
@@ -248,7 +248,7 @@ defmodule Monet.Reader do
 	end
 
 	# MonetDB strips out any leading zeros from the year, so we can't use Date.from_iso8601
-	defp parse_value(:date, data) do
+	defp parse_value(:date, <<data::binary>>) do
 		with {:ok, [year, month, day], rest, _, _, _} <- extract_date(data),
 				 {:ok, date} <- Date.new(year, month, day)
 		do
@@ -258,7 +258,7 @@ defmodule Monet.Reader do
 		end
 	end
 
-	defp parse_value(:timestamp, data) do
+	defp parse_value(:timestamp, <<data::binary>>) do
 		with {:ok, <<" ", rest::binary>>, date} <- parse_value(:date, data),
 				 {:ok, rest, time} <- parse_value(:time, rest),
 				 {:ok, datetime} <- NaiveDateTime.new(date, time)
@@ -270,7 +270,7 @@ defmodule Monet.Reader do
 	end
 
 	# I'm pretty this timezone stuff isn't right
-	defp parse_value(:timestamptz, data) do
+	defp parse_value(:timestamptz, <<data::binary>>) do
 		with {:ok, <<" ", rest::binary>>, date} <- parse_value(:date, data),
 				 {:ok, rest, time} <- parse_value(:time, rest),
 				 {:ok, time_zone, rest, _, _, _} <- extract_time_zone(rest)
@@ -296,7 +296,7 @@ defmodule Monet.Reader do
 	end
 
 
-	defp parse_value(type, data) do
+	defp parse_value(type, <<data::binary>>) do
 		{:error, Error.new(:driver, "unsupported type: #{type}", data)}
 	end
 
@@ -313,7 +313,7 @@ defmodule Monet.Reader do
 	defp token_length(<<?\t, _rest::binary>>, len), do: len
 	defp token_length(<<_, rest::binary>>, len), do: token_length(rest, len + 1)
 
-	defp parse_string(data, acc \\ []) do
+	defp parse_string(<<data::binary>>, acc \\ []) do
 		case :binary.split(data, "\\") do
 			[text, <<?e, rest::binary>>] -> parse_string(rest, [acc, text, ?\e])
 			[text, <<?f, rest::binary>>] -> parse_string(rest, [acc, text, ?\f])

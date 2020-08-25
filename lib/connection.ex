@@ -108,6 +108,8 @@ defmodule Monet.Connection do
 			after
 				Transaction.close(tx) # deallocate any prepared statements
 			end
+		else
+			err -> error_result(err, conn)
 		end
 	end
 
