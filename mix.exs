@@ -1,7 +1,7 @@
 defmodule Monet.MixProject do
 	use Mix.Project
 
-	@version "0.0.9"
+	@version "0.1.0"
 
 	def project do
 		[

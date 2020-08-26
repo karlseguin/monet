@@ -364,6 +364,15 @@ defmodule Monet do
 	end
 
 	@impl NimblePool
+	def handle_checkin(nil, _from, conn, pool_state) do
+		{:remove, :closed, pool_state}
+	end
+
+	def handle_checkin(_conn, _from, conn, pool_state) do
+		{:ok, conn, pool_state}
+	end
+
+	@impl NimblePool
 	def terminate_worker(_reason, nil, pool_state), do: {:ok, pool_state}
 	def terminate_worker(_reason, conn, pool_state) do
 		Connection.close(conn)

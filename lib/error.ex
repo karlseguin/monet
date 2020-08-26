@@ -11,7 +11,7 @@ defmodule Monet.Error do
 	rows or columns than is expected (e.g., calling Monet.scalar on a result that
 	has more than 1 row or more than 1 column).Monet
 
-	Otherwise the `source` field can be either `:tcp` or `:driver` to indicate a
+	Otherwise the `source` field can be either `:network` or `:driver` to indicate a
 	tcp-level error or an error arising from this library. In both cases, `code`
 	will always be nil.
 
@@ -55,7 +55,7 @@ defmodule Monet.Error do
 	end
 
 	@doc false
-	def closed?(%{source: :tcp}), do: true
+	def closed?(%{source: :network}), do: true
 	def closed?(_), do: false
 
 	defp details(nil), do: []
