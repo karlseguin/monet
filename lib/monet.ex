@@ -364,7 +364,7 @@ defmodule Monet do
 	end
 
 	@impl NimblePool
-	def handle_checkin(nil, _from, conn, pool_state) do
+	def handle_checkin(nil, _from, _conn, pool_state) do
 		{:remove, :closed, pool_state}
 	end
 
