@@ -22,13 +22,14 @@ defmodule Monet.Query.Select do
 
 	alias __MODULE__
 
-	@enforce_keys [:select, :from, :where, :order, :limit, :offset]
+	@enforce_keys [:select, :from, :where, :order, :group, :limit, :offset]
 	defstruct @enforce_keys
 
 	def new() do
 		%Select{
 			from: [],
 			order: nil,
+			group: nil,
 			limit: nil,
 			offset: nil,
 			select: nil,
@@ -81,6 +82,8 @@ defmodule Monet.Query.Select do
 	defp append_order(%{order: nil} = s, order), do: %Select{s | order: [order]}
 	defp append_order(%{order: existing} = s, order), do: %Select{s | order: [existing, ", ", order]}
 
+	def group(s, group), do: %Select{s | group: group}
+
 	def limit(s, limit) when is_integer(limit), do: %Select{s | limit: limit}
 	def offset(s, offset) when is_integer(offset), do: %Select{s | offset: offset}
 
@@ -99,6 +102,11 @@ defmodule Monet.Query.Select do
 	def to_sql(s) do
 		{where, args} = Where.to_sql(s.where)
 		sql = ["select ", s.select || "*", " from ", s.from, where]
+
+		sql = case s.group do
+			nil -> sql
+			group -> [sql, " group by ", group]
+		end
 
 		sql = case s.order do
 			nil -> sql
@@ -127,7 +135,7 @@ defimpl Inspect, for: Monet.Query.Select do
 		sql = :erlang.iolist_to_binary(sql)
 		sql = Regex.split(~r/ (from|join|where|order by|limit|offset) /, sql, include_captures: true)
 		docs = fold_doc(sql, fn
-			<<" ", doc::binary>>, acc when doc in ["from ", "join", "where ", "order by ", "limit ", "offset "] -> concat([break("\n"), doc, acc])
+			<<" ", doc::binary>>, acc when doc in ["from ", "join", "where ", "group by", "order by ", "limit ", "offset "] -> concat([break("\n"), doc, acc])
 			doc, acc -> concat(doc, acc)
 		end)
 		concat [docs, break("\n"), to_doc(values, opts)]

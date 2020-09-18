@@ -72,17 +72,19 @@ defmodule Monet.Tests.Query.Select do
 		assert sql == "select * from t limit 20 offset 40"
 	end
 
-	test "order by limit/offset" do
+	test "order+group+limit+offset" do
 		{sql, []} = Select.new()
 		|> Select.from("t")
 		|> Select.order("x")
 		|> Select.order("y", false)
+		|> Select.group("name")
 		|> Select.offset(1000)
 		|> Select.limit(100)
 		|> render()
 
-		assert sql == "select * from t order by x, y desc limit 100 offset 1000"
+		assert sql == "select * from t group by name order by x, y desc limit 100 offset 1000"
 	end
+
 
 	test "simple filters" do
 		{sql, args} = Select.new()
