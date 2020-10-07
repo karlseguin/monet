@@ -36,9 +36,7 @@ defmodule Monet.MixProject do
 			{:decimal, "~> 2.0.0"},
 			{:nimble_pool, "~> 0.2.1"},
 			{:nimble_parsec, "~> 1.1.0"},
-			{:ex_doc, "~> 0.22.6", only: :dev, runtime: false},
-			{:earmark, "~> 1.4.10", only: :dev, runtime: false},
-			{:makeup_elixir, "~> 0.15.0", only: :dev, runtime: false}
+			{:ex_doc, "~> 0.22.6", only: :dev, runtime: false}
 		]
 	end
 end
