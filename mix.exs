@@ -25,12 +25,8 @@ defmodule Monet.MixProject do
 	defp paths(_), do: ["lib"]
 
 	def application do
-		# trying to fix an apparent issue with ex_doc / elixir 11.1
 		[
-			extra_applications: [:logger, :crypto] ++ case Mix.env() do
-				:dev -> [:earmark]
-				_ -> []
-			end
+			extra_applications: [:logger, :crypto]
 		]
 	end
 
@@ -41,6 +37,7 @@ defmodule Monet.MixProject do
 			{:nimble_pool, "~> 0.2.1"},
 			{:nimble_parsec, "~> 1.1.0"},
 			{:ex_doc, "~> 0.22.6", only: :dev, runtime: false},
+			{:earmark, "~> 1.4.10", only: :dev, runtime: false}
 		]
 	end
 end
