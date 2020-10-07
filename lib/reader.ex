@@ -198,9 +198,8 @@ defmodule Monet.Reader do
 	end
 
 	defp parse_value(:decimal, <<data::binary>>) do
-		{value, rest} = extract_token(data)
-		case Decimal.parse(value) do
-			{:ok, value} -> {:ok, rest, value}
+		case Decimal.parse(data) do
+			{value, rest} -> {:ok, rest, value}
 			:error -> {:error, Error.new(:driver, "invalid decimal", data)}
 		end
 	end

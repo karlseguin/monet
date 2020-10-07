@@ -32,7 +32,7 @@ defmodule Monet.Tests.Transaction do
 	test "rollback on raise" do
 		Monet.query!("truncate table tx_test")
 		assert_raise RuntimeError, fn ->
-			assert {:error, result} = Monet.transaction(fn tx ->
+			assert {:error, _} = Monet.transaction(fn tx ->
 				Monet.query(tx, "insert into tx_test values (?)", 3)
 				raise "fail"
 			end)

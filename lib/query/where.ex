@@ -32,7 +32,11 @@ defmodule Monet.Query.Where do
 				%{q | where: Where.lte(q.where, column, value)}
 			end
 
-			@where_op [:eq, :ne, :gt, :gte, :lt, :lte]
+			def where(q, column, :like, value) do
+				%{q | where: Where.like(q.where, column, value)}
+			end
+
+			@where_op [:eq, :ne, :gt, :gte, :lt, :lte, :like]
 			defmacro where_and(q, fun) do
 				fun = Macro.postwalk(fun, fn
 					{op, line, args} when op in @where_op -> {{:., line, [{:__aliases__, line, [:Monet, :Query, :Where]}, op]}, line, args}
@@ -87,6 +91,8 @@ defmodule Monet.Query.Where do
 
 	def lt(w, column, value), do: append(w, column, " < ", value)
 	def lte(w, column, value), do: append(w, column, " <= ", value)
+
+	def like(w, column, value), do: append(w, column, " like ", value)
 
 	def where_fun(where, fun, op) do
 		outer = case where.sql do

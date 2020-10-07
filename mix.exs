@@ -1,7 +1,7 @@
 defmodule Monet.MixProject do
 	use Mix.Project
 
-	@version "0.1.0"
+	@version "0.1.2"
 
 	def project do
 		[
@@ -26,17 +26,17 @@ defmodule Monet.MixProject do
 
 	def application do
 		[
-			extra_applications: [:logger]
+			extra_applications: [:logger, :crypto]
 		]
 	end
 
 	defp deps do
 		[
-			{:jason, "~> 1.2.1"},
-			{:decimal, "~> 1.8.1"},
-			{:nimble_pool, "~> 0.2.0"},
-			{:nimble_parsec, "~> 0.6.0"},
-			{:ex_doc, "~> 0.21.2", only: :dev, runtime: false},
+			{:jason, "~> 1.2.2"},
+			{:decimal, "~> 2.0.0"},
+			{:nimble_pool, "~> 0.2.1"},
+			{:nimble_parsec, "~> 1.1.0"},
+			{:ex_doc, "~> 0.22.6", only: :dev, runtime: false},
 		]
 	end
 end

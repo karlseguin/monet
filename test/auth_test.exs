@@ -7,7 +7,7 @@ defmodule Monet.Tests.Auth do
 			encode: "oRzY7XZr1EfNWETqU6b2:merovingian:9:RIPEMD160,SHA256,SHA1,MD5:LIT:SHA512:",
 			reply: {self(), ""}
 		)
-		assert {:ok, conn} = Auth.login(conn, username: "leto", password: "atreides", database: "dune")
+		assert {:ok, _} = Auth.login(conn, username: "leto", password: "atreides", database: "dune")
 		assert get_echo() == {:ok, "LIT:leto:{SHA256}9f133d2ccda31b36cb9c4a848cf4332635d353b5c8c0fee341a8c90ffcc38127:sql:dune:"}
 	end
 
