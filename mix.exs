@@ -25,8 +25,12 @@ defmodule Monet.MixProject do
 	defp paths(_), do: ["lib"]
 
 	def application do
+		# trying to fix an apparent issue with ex_doc / elixir 11.1
 		[
-			extra_applications: [:logger, :crypto]
+			extra_applications: [:logger, :crypto] ++ case Mix.env() do
+				:dev -> [:earmark]
+				_ -> []
+			end
 		]
 	end
 
