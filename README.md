@@ -1,16 +1,24 @@
-# A MonetDB driver for Elixir
+# Monet
+
+[![hex.pm](https://img.shields.io/hexpm/v/monet.svg)](https://hex.pm/packages/monet)
+[![hex.pm](https://img.shields.io/hexpm/dt/monet.svg)](https://hex.pm/packages/monet)
+[![hex.pm](https://img.shields.io/hexpm/l/monet.svg)](https://hex.pm/packages/monet)
+[![github.com](https://img.shields.io/github/last-commit/karlseguin/monet.svg)](https://github.com/karlseguin/monet)
+
+A [MonetDB](https://www.monetdb.org/) driver for Elixir
 
 Warning: Early development.
 
 ## Usage
 
-In your mix.exs file, add the project dependency:
+In your `mix.exs` file, add the project dependency:
 
 ```
 {:monet, "~> 0.1.2"}
 ```
 
-You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
+You can start a pool by adding `Monet` to your supervisor tree and providing
+configuration options:
 
 ```elixir
 opts = [
@@ -26,7 +34,7 @@ opts = [
 ]
 children = [
   ...
-  {Monet, opts} 
+  {Monet, opts}
 ]
 ```
 
@@ -40,9 +48,11 @@ You can then use the `Monet.query/1` and `Monet.query/2` functions:
 You can optionally use the `query!` variant.
 
 ### Named Pool
-When you create the pool, you have the option of providing a `name` This is useful in the case where you want to connect to multiple instances:
 
- ```elixir
+When you create the pool, you have the option of providing a `name` This is
+useful in the case where you want to connect to multiple instances:
+
+```elixir
 opts = [
   pool_size: 10,
   ...
@@ -58,9 +68,14 @@ When a named pool is used, the `query/2` and `query/3` functions must be used:
 ```
 
 ## Results
-On success, a `Monet.Result` structure is returned. The `rows` field exposes a list of list.
 
-`Monet.Result` also implements the Enumerable and Jason.Encoder protocols. By default, these simply enumerate or render `rows` as a list of lists. However, `Monet.as_map/1` can be used to change this behavior to iterate over a list of maps.
+On success, a `Monet.Result` structure is returned. The `rows` field exposes a
+list of list.
+
+`Monet.Result` also implements the Enumerable and Jason.Encoder protocols. By
+default, these simply enumerate or render `rows` as a list of lists. However,
+`Monet.as_map/1` can be used to change this behavior to iterate over a list of
+maps.
 
 ```elixir
 case Monet.as_map(Monet.query("select id, name from saiyans")) do
@@ -69,17 +84,23 @@ case Monet.as_map(Monet.query("select id, name from saiyans")) do
 end
 ```
 
-`as_map/1` is safe to chain with `Monet.query` as it will return any `{:error, _}` structure passed to it as-is.
+`as_map/1` is safe to chain with `Monet.query` as it will return any `{:error, _}`
+structure passed to it as-is.
 
-Note that `result.rows` does not change. It continues to be a listof lists. What does change is the Enumerable and Jason encoding behavior.
+Note that `result.rows` does not change. It continues to be a listof lists.
+What does change is the Enumerable and Jason encoding behavior.
 
 Optionally, `columns: :atoms` can be passed to `as_map`.
 
 
 ### Result Helpers
-`Monet.rows/1`, `Monet.rows!/1`, `Monet.row/1`, Monet.row!/1`, Monet.scalar/1`, `Monet.scalar!/1`, `Monet.map!/2` and `Monet.maps!/2` are all helpers that can help to turn a Result into more concrete structures.
 
-They're safe to use even if `Monet.query` returns an error (they simply return the error).
+`Monet.rows/1`, `Monet.rows!/1`, `Monet.row/1`, Monet.row!/1`, Monet.scalar/1`,
+`Monet.scalar!/1`, `Monet.map!/2` and `Monet.maps!/2` are all helpers that can
+help to turn a Result into more concrete structures.
+
+They're safe to use even if `Monet.query` returns an error (they simply return
+the error).
 
 ```elixir
 with {:ok, [a, b]} <- Monet.row(Monet.query("select 1, 2")) do
@@ -87,14 +108,19 @@ with {:ok, [a, b]} <- Monet.row(Monet.query("select 1, 2")) do
 end
 ```
 
-`row`, and `map` return an error if more the result has more than 1 row (the `row!` and `map!` variants raise). They return `nil` if there are no rows.
+`row`, and `map` return an error if more the result has more than 1 row (the
+`row!` and `map!` variants raise). They return `nil` if there are no rows.
 
-`scalar` and `scalar!` behaves the same, but also returns/raises if more there is more than 1 column.
+`scalar` and `scalar!` behaves the same, but also returns/raises if more there
+is more than 1 column.
 
-`map`, `map!`, `maps` and `maps!` accepts a second optional parameter, `columns: :atoms`.
+`map`, `map!`, `maps` and `maps!` accepts a second optional parameter,
+`columns: :atoms`.
 
 ## Transactions
-`Monet.transaction/1` and `Monet.transaction/2` (for named pools) can be used to wrap code in a transaction:
+
+`Monet.transaction/1` and `Monet.transaction/2` (for named pools) can be used
+to wrap code in a transaction:
 
 ```elixir
 Monet.transaction(fn tx ->
@@ -105,15 +131,18 @@ end)
 
 The function you provide can return:
 
-* `{:rollback, value}` - to rollback the transaction and return the same 2-value tuple
-* `{:commit, value}` - to commit the transaction and return `{:ok, value}`
-* `{:ok, value}` - to commit the transaction and return `{:ok, value}`
-* `value` - to commit the transaction and return `{:ok, value}`
+  * `{:rollback, value}` - to rollback the transaction and return the same 2-value tuple
+  * `{:commit, value}` - to commit the transaction and return `{:ok, value}`
+  * `{:ok, value}` - to commit the transaction and return `{:ok, value}`
+  * `value` - to commit the transaction and return `{:ok, value}`
 
 ## Prepared Statements
 Any calls to `query` which passes arguments will use a prepared statement.
 
-Special handling of prepared within a transaction is available. Using `Monet.prepare/3`, prepared statements can be registered with a given name and re-used. At the end of the transaction, the prepared statements are automatically deallocated.
+Special handling of prepared within a transaction is available. Using
+`Monet.prepare/3`, prepared statements can be registered with a given name and
+re-used. At the end of the transaction, the prepared statements are
+automatically deallocated.
 
 ```elixir
 Monet.transaction(fn tx ->
@@ -128,4 +157,12 @@ Monet.transaction(fn tx ->
 end)
 ```
 
-Keep in mind that MonetDB automatically deallocates prepared statements on execution error. This is why having automatically management of prepared statements at the transaction level makes sense (since a failure to execute probably means the transaction ends). It's much more complicated at the connection level (especially when you add the indirection of the pool).
+Keep in mind that MonetDB automatically deallocates prepared statements on
+execution error. This is why having automatically management of prepared
+statements at the transaction level makes sense (since a failure to execute
+probably means the transaction ends). It's much more complicated at the
+connection level (especially when you add the indirection of the pool).
+
+## License
+
+[ISC](LICENSE) Copyright (c) 2020, Karl Seguin
