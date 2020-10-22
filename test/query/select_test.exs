@@ -107,7 +107,7 @@ defmodule Monet.Tests.Query.Select do
 
 		assert sql == flatten("select * from t
 			where a1 = ? and a2 = ? and a3 = ? and a4 = ? and a5 is null
-			and b1 != ? and b2 != ? and b3 != ? and b4 != ? and b5 is not null
+			and b1 <> ? and b2 <> ? and b3 <> ? and b4 <> ? and b5 is not null
 			and c1 > ? and c2 >= ? and d1 < ? and d2 <= ?")
 
 		assert args == [
@@ -138,7 +138,7 @@ defmodule Monet.Tests.Query.Select do
 
 		assert sql == flatten("select * from t
 			where a1 = ? and a2 = ? and a3 = ? and a4 = ?
-			and b1 != ? and b2 != ? and b3 != ? and b4 != ?
+			and b1 <> ? and b2 <> ? and b3 <> ? and b4 <> ?
 			and c1 > ? and c2 >= ? and d1 < ? and d2 <= ?")
 
 		assert args == [

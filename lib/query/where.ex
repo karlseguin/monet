@@ -82,9 +82,9 @@ defmodule Monet.Query.Where do
 	def eq(w, column, value), do: append(w, column, " = ", value)
 
 	def ne(w, column, nil), do: append(w, [column, " is not null"])
-	def ne(w, column, value) when is_boolean(value), do: append(w, column, " != ", value)
+	def ne(w, column, value) when is_boolean(value), do: append(w, column, " <> ", value)
 	def ne(w, column, value) when is_atom(value), do: ne(w, column, Atom.to_string(value))
-	def ne(w, column, value), do: append(w, column, " != ", value)
+	def ne(w, column, value), do: append(w, column, " <> ", value)
 
 	def gt(w, column, value), do: append(w, column, " > ", value)
 	def gte(w, column, value), do: append(w, column, " >= ", value)
