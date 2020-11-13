@@ -76,8 +76,7 @@ defmodule Monet.Transaction do
 	`Monet.prepare/3`.
 	"""
 	def prepare(tx, name, sql) do
-		with {:ok, prepared} <- Prepared.new(transaction(tx, :conn), sql)
-		do
+		with {:ok, prepared} <- Prepared.new(transaction(tx, :conn), sql) do
 			ref = transaction(tx, :ref)
 			pool_name = transaction(tx, :pool_name)
 			:ets.insert(pool_name, {{ref, name}, prepared})
@@ -95,6 +94,7 @@ defmodule Monet.Transaction do
 		Enum.each(:ets.match(pool_name, {{ref, :_}, :'$1'}), fn [prepared] ->
 			Prepared.close(prepared)
 		end)
+		:ets.match_delete(pool_name, {{ref, :_}, :'$1'})
 	end
 
 end

@@ -1,7 +1,7 @@
 defmodule Monet.MixProject do
 	use Mix.Project
 
-	@version "0.1.3"
+	@version "0.1.4"
 
 	def project do
 		[
@@ -34,9 +34,9 @@ defmodule Monet.MixProject do
 		[
 			{:jason, "~> 1.2.2"},
 			{:decimal, "~> 2.0.0"},
-			{:nimble_pool, "~> 0.2.1"},
+			{:nimble_pool, "~> 0.2.3"},
 			{:nimble_parsec, "~> 1.1.0"},
-			{:ex_doc, "~> 0.22.6", only: :dev, runtime: false}
+			{:ex_doc, "~> 0.23.0", only: :dev, runtime: false}
 		]
 	end
 end

@@ -24,7 +24,7 @@ defmodule Monet.Tests.Generator do
 	end
 
 	def float(64) do
-		int(63) + :rand.uniform_real()
+		:rand.uniform_real()
 	end
 
 	def decimal() do

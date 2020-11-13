@@ -55,6 +55,7 @@ defmodule Monet.Tests.Transaction do
 			Monet.query!(tx, :p2, [2])
 			Monet.query!(tx, :p1, [3])
 		end)
+		assert :ets.info(:transaction_test)[:size] == 0
 		assert Monet.query!(:transaction_test, "select * from sys.prepared_statements").row_count == 0
 		assert Monet.query!(:transaction_test, "select * from tx_test order by id").rows == [[1], [2], [3]]
 		GenServer.stop(:transaction_test)
