@@ -7,7 +7,7 @@ Warning: Early development.
 In your mix.exs file, add the project dependency:
 
 ```
-{:monet, "~> 0.1.2"}
+{:monet, "~> 0.1.5"}
 ```
 
 You can start a pool by adding `Monet` to your supervisor tree and providing configuration options:
@@ -128,4 +128,4 @@ Monet.transaction(fn tx ->
 end)
 ```
 
-Keep in mind that MonetDB automatically deallocates prepared statements on execution error. This is why having automatically management of prepared statements at the transaction level makes sense (since a failure to execute probably means the transaction ends). It's much more complicated at the connection level (especially when you add the indirection of the pool).
+Keep in mind that MonetDB automatically deallocates prepared statements on execution error. This is why having automatic management of prepared statements at the transaction level makes sense (since a failure to execute probably means the transaction ends). It's much more complicated at the connection level (especially when you add the indirection of the pool).

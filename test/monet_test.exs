@@ -3,6 +3,8 @@ defmodule Monet.Tests.Monet do
 
 	alias Monet.Tests.Generator
 
+	@fuzz_count 1
+
 	@sql_types [
 		char1_col: [sql: "char(1)", type: :utf8, args: 1],
 		char5_col: [sql: "char(5)", type: :utf8, args: 5],
@@ -94,7 +96,7 @@ defmodule Monet.Tests.Monet do
 		fuzz = fn i ->
 			insert = "insert into sql_types_#{i} (#{columns}) values (#{placeholders})"
 			value_configs = Keyword.values(@sql_types)
-			for _ <- 1..200 do
+			for _ <- 1..@fuzz_count do
 				{inputs, outputs} = Enum.reduce(value_configs, {[], []}, fn config, {inputs, outputs} ->
 					{i, o} = case generate(config[:type], config[:args]) do
 						{i, o} -> {i, o}

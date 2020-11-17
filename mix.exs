@@ -1,7 +1,7 @@
 defmodule Monet.MixProject do
 	use Mix.Project
 
-	@version "0.1.4"
+	@version "0.1.5"
 
 	def project do
 		[
@@ -11,6 +11,7 @@ defmodule Monet.MixProject do
 			version: @version,
 			elixirc_paths: paths(Mix.env),
 			description: "MonetDB driver",
+			test_coverage: [tool: ExCoveralls],
 			package: [
 				licenses: ["MIT"],
 				links: %{
@@ -36,6 +37,7 @@ defmodule Monet.MixProject do
 			{:decimal, "~> 2.0.0"},
 			{:nimble_pool, "~> 0.2.3"},
 			{:nimble_parsec, "~> 1.1.0"},
+			{:excoveralls, "~> 0.13.3", only: :test},
 			{:ex_doc, "~> 0.23.0", only: :dev, runtime: false}
 		]
 	end

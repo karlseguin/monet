@@ -85,7 +85,6 @@ defmodule Monet.Tests.Query.Select do
 		assert sql == "select * from t group by name order by x, y desc limit 100 offset 1000"
 	end
 
-
 	test "simple filters" do
 		{sql, args} = Select.new()
 		|> Select.from("t")
@@ -103,17 +102,19 @@ defmodule Monet.Tests.Query.Select do
 		|> Select.where("c2", :gte, 11)
 		|> Select.where("d1", :lt, 12)
 		|> Select.where("d2", :lte, 13)
+		|> Select.where("e1", :like, "abc")
 		|> render()
 
 		assert sql == flatten("select * from t
 			where a1 = ? and a2 = ? and a3 = ? and a4 = ? and a5 is null
 			and b1 <> ? and b2 <> ? and b3 <> ? and b4 <> ? and b5 is not null
-			and c1 > ? and c2 >= ? and d1 < ? and d2 <= ?")
+			and c1 > ? and c2 >= ? and d1 < ? and d2 <= ?
+			and e1 like ?")
 
 		assert args == [
 			1, "atom", true, "over",
 			9000, "atom", false, "dune",
-			10, 11, 12, 13
+			10, 11, 12, 13, "abc"
 		]
 	end
 
@@ -168,6 +169,24 @@ defmodule Monet.Tests.Query.Select do
 		|> Select.limit(1)
 		|> Select.exec!()
 		|> Monet.scalar!() == 1
+	end
+
+	test "inspect" do
+		import ExUnit.CaptureIO
+
+		select = Select.new()
+		|> Select.columns("c")
+		|> Select.from("t")
+		|> Select.where("w", :eq, 1)
+		|> Select.order("x")
+		|> Select.order("y", false)
+		|> Select.group("name")
+		|> Select.offset(1000)
+		|> Select.limit(100)
+
+		assert capture_io(fn ->
+			IO.inspect(select)
+		end) == "select c\nfrom t\nwhere w = ? group by name\norder by x, y desc\nlimit 100\noffset 1000\n[1]\n"
 	end
 
 	defp render(select) do

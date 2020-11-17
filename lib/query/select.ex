@@ -21,6 +21,7 @@ defmodule Monet.Query.Select do
 	end
 
 	alias __MODULE__
+	alias Monet.Query.Cursor
 
 	@enforce_keys [:select, :from, :where, :order, :group, :limit, :offset]
 	defstruct @enforce_keys
@@ -86,6 +87,26 @@ defmodule Monet.Query.Select do
 
 	def limit(s, limit) when is_integer(limit), do: %Select{s | limit: limit}
 	def offset(s, offset) when is_integer(offset), do: %Select{s | offset: offset}
+
+	def cursor(s, opts), do: Cursor.new(s, opts)
+
+	def reduce(%Cursor{} = cursor, acc, fun) do
+		step(Cursor.next(cursor), acc, fun)
+	end
+
+	defp step({:empty, _cursor}, acc, fun) do
+		fun.(:empty, acc)
+	end
+
+	defp step({:row, row, cursor}, acc, fun) do
+		acc = fun.({:row, row}, acc)
+		step(Cursor.next(cursor), acc, fun)
+	end
+
+	defp step({:last, row, cursor}, acc, fun) do
+		acc = fun.({:row, row}, acc)
+		fun.(Cursor.next(cursor), acc) # returns the {:page, _info result}
+	end
 
 	def exec(s, pool \\ Monet) do
 		{sql, args} = to_sql(s)
