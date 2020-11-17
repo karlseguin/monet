@@ -3,7 +3,7 @@ defmodule Monet.Tests.Monet do
 
 	alias Monet.Tests.Generator
 
-	@fuzz_count 1
+	@fuzz_count 100
 
 	@sql_types [
 		char1_col: [sql: "char(1)", type: :utf8, args: 1],

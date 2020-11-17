@@ -19,11 +19,11 @@ defmodule Monet.Tests.Query.Cursor do
 		# rows 3 and 4 hae the same sort values to test that equal sorts behave correctly
 		Monet.query!("
 			insert into cursor_test (id, cursor, int_sort, float_sort, timestamptz_sort) values
-				(1, 1, 1, 1.1, now() + 1),
-				(2, 2, 2, 2.2, now() + 2),
-				(3, 3, 3, 3.3, now() + 3),
-				(4, 4, 3, 3.3, now() + 3),
-				(5, 5, 5, 5.5, now() + 5)
+				(1, 1, 1, 1.1, now() + interval '1' second),
+				(2, 2, 2, 2.2, now() + interval '2' second),
+				(3, 3, 3, 3.3, now() + interval '3' second),
+				(4, 4, 3, 3.3, now() + interval '3' second),
+				(5, 5, 5, 5.5, now() + interval '5' second)
 		",[])
 		:ok
 	end
