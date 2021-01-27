@@ -36,6 +36,10 @@ defmodule Monet.Query.Where do
 				%{q | where: Where.like(q.where, column, value)}
 			end
 
+			def where(q, column, :any, values) do
+				%{q | where: Where.any(q.where, column, values)}
+			end
+
 			def where(q, :sql, sql) do
 				%{q | where: Where.sql(q.where, sql)}
 			end
@@ -44,7 +48,7 @@ defmodule Monet.Query.Where do
 				%{q | where: Where.param(q.where, value)}
 			end
 
-			@where_op [:eq, :ne, :gt, :gte, :lt, :lte, :like]
+			@where_op [:eq, :ne, :gt, :gte, :lt, :lte, :like, :any]
 			defmacro where_and(q, fun) do
 				fun = Macro.postwalk(fun, fn
 					{op, line, args} when op in @where_op -> {{:., line, [{:__aliases__, line, [:Monet, :Query, :Where]}, op]}, line, args}
@@ -102,9 +106,20 @@ defmodule Monet.Query.Where do
 
 	def like(w, column, value), do: append(w, column, " like ", value)
 
+	def any(w, column, values) when is_list(values) do
+		placeholder = "#{column} = ?"
+		{sql, values} = Enum.reduce(values, {[], w.values}, fn value, {sql, values} ->
+			{[placeholder | sql], [value | values]}
+		end)
+
+		w = append(w, [?(, Enum.join(sql, " or "), ?)])
+		%{w | values: values}
+	end
+
+	def any(w, column, value), do: append(w, column, " = ", value)
+
 	def sql(w, sql), do: append(w, sql)
 	def param(w, value), do: %Where{w | values: [value | w.values]}
-
 
 	def where_fun(where, fun, op) do
 		outer = case where.sql do

@@ -160,6 +160,32 @@ defmodule Monet.Tests.Query.Select do
 		assert args == ["goku", 9000, true]
 	end
 
+	test "any" do
+		{sql, args} = Select.new()
+		|> Select.from("t")
+		|> Select.where("a1", :any, 1)
+		|> render()
+		assert sql == flatten("select * from t where a1 = ?")
+		assert args == [1]
+
+		{sql, args} = Select.new()
+		|> Select.from("t")
+		|> Select.where("a1", :any, [1, 2])
+		|> render()
+		assert sql == flatten("select * from t where (a1 = ? or a1 = ?)")
+		assert args == [1, 2]
+
+		{sql, args} = Select.new()
+		|> Select.from("t")
+		|> Select.where("x1", :eq, true)
+		|> Select.where("a1", :any, [1, 2])
+		|> Select.where("z1", :eq, false)
+		|> render()
+
+		assert sql == flatten("select * from t where x1 = ? and (a1 = ? or a1 = ?) and z1 = ?")
+		assert args == [true, 1, 2, false]
+	end
+
 	test "exec" do
 		connect()
 		assert Select.new()
