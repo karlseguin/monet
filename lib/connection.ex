@@ -277,4 +277,14 @@ defmodule Monet.Connection do
 	Get the name of the pool this connection belongs tos
 	"""
 	def pool_name(conn), do: connection(conn, :pool_name)
+
+	def checkout(conn) do
+		:inet.setopts(connection(conn, :socket), active: false)
+	end
+
+	# set in active so we might be able to detect closed sockets and proactively
+	# remove from the pool
+	def checkin(conn) do
+		:inet.setopts(connection(conn, :socket), active: :once)
+	end
 end

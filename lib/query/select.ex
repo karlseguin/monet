@@ -42,7 +42,7 @@ defmodule Monet.Query.Select do
 	Columns to select. If not called, will select *.
 	Can can called multiple times. Can be called with an array, or a string.
 	This can really be anything and it's best to think of it as the test that
-	is placed between the `select` and the `from.
+	is placed between the `select` and the `from`.
 	"""
 	def columns(q, [first | columns]) do
 		columns = Enum.reduce(columns, [first], fn c, acc -> [acc, ", ", c] end)

@@ -350,7 +350,7 @@ defmodule Monet do
 	@impl NimblePool
 	def handle_checkout(:checkout, _, nil, state)  do
 		failures = pool(state, :failures)
-		# micro-opt, bu thtere's no point in increasing this value any more since
+		# micro-opt, but there's no point in increasing this value any more since
 		# we've reached our max backoff
 		state = case failures > 10 do
 			true -> state
@@ -360,6 +360,7 @@ defmodule Monet do
 	end
 
 	def handle_checkout(:checkout, {_pid, _}, conn, state) do
+		Connection.checkout(conn)
 		{:ok, conn, conn, state}
 	end
 
@@ -369,7 +370,13 @@ defmodule Monet do
 	end
 
 	def handle_checkin(_conn, _from, conn, pool_state) do
+		Connection.checkin(conn)
 		{:ok, conn, pool_state}
+	end
+
+	@impl NimblePool
+	def handle_info({:tcp_closed, _}, _conn) do
+		{:remove, :tcp_closed}
 	end
 
 	@impl NimblePool
