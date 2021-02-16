@@ -116,6 +116,7 @@ defmodule Monet.Query.Select do
 	def exec!(s, pool \\ Monet) do
 		case exec(s, pool) do
 			{:ok, result} -> result
+			{:error, %{code: 42000} = err} -> raise Map.put(err, :details, inspect(s))
 			{:error, err} -> raise err
 		end
 	end

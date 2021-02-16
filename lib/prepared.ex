@@ -37,7 +37,7 @@ defmodule Monet.Prepared do
 	Of importance here is a) getting the id  b) getting the types
 	"""
 	def new(conn, sql) do
-		with :ok, Writer.query(conn, ["prepare ", sql]),
+		with :ok <-  Writer.query(conn, ["prepare ", sql]),
 		     {:ok, data} <- Reader.message(conn)
 		do
 			build(conn, data)

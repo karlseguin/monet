@@ -150,8 +150,8 @@ defmodule Monet.Query.Cursor do
 
 	defp build_where_sql(select, {sort, type}, cursor_column, op, cursor, dir) do
 		with [cursor_value, sort_value] <- :binary.split(cursor, "_"),
-				 {cursor_value, ""} <- Integer.parse(cursor_value),
-				 {:ok, sort_value} <- decode_sort_value(sort_value, type)
+		     {cursor_value, ""} <- Integer.parse(cursor_value),
+		     {:ok, sort_value} <- decode_sort_value(sort_value, type)
 		do
 			select = select
 			|> Select.param(sort_value)

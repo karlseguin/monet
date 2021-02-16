@@ -197,6 +197,28 @@ defmodule Monet.Tests.Query.Select do
 		|> Monet.scalar!() == 1
 	end
 
+	test "exec with syntax error" do
+		connect()
+		select = Select.new()
+		|> Select.columns("1")
+		|> Select.from("sys.table t")
+		|> Select.where("1", :eq, 1)
+		|> Select.where("1", :eq, 1)
+		|> Select.where("1", :eq, 1)
+		|> Select.where("1", :eq, 1)
+		|> Select.where("1", :eq, 1)
+		|> Select.where(")", :eq, 1)
+		|> Select.limit(1)
+
+		try do
+			Select.exec!(select)
+			flunk("expecting failure")
+		rescue
+			e in Monet.Error ->
+				assert e.details == "select 1\nfrom sys.table t\nwhere 1 = ? and 1 = ? and 1 = ? and 1 = ? and 1 = ? and ) = ?\nlimit 1\n[1, 1, 1, 1, 1, 1]"
+		end
+	end
+
 	test "inspect" do
 		import ExUnit.CaptureIO
 
