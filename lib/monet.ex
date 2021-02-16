@@ -379,6 +379,10 @@ defmodule Monet do
 		{:remove, :tcp_closed}
 	end
 
+	def handle_info({:EXIT, _pid, reason}, _conn) do
+		{:remove, reason}
+	end
+
 	@impl NimblePool
 	def terminate_worker(_reason, nil, pool_state), do: {:ok, pool_state}
 	def terminate_worker(_reason, conn, pool_state) do
