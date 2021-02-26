@@ -106,6 +106,7 @@ defmodule Monet.Query.Where do
 
 	def like(w, column, value), do: append(w, column, " like ", value)
 
+	def any(w, columns, []), do: w
 	def any(w, column, values) when is_list(values) do
 		placeholder = "#{column} = ?"
 		{sql, values} = Enum.reduce(values, {[], w.values}, fn value, {sql, values} ->

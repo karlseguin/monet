@@ -103,18 +103,24 @@ defmodule Monet.Tests.Query.Select do
 		|> Select.where("d1", :lt, 12)
 		|> Select.where("d2", :lte, 13)
 		|> Select.where("e1", :like, "abc")
+		|> Select.where("f1", :any, [])
+		|> Select.where("f2", :any, 100)
+		|> Select.where("f3", :any, [101])
+		|> Select.where("f4", :any, [102, 103])
 		|> render()
 
 		assert sql == flatten("select * from t
 			where a1 = ? and a2 = ? and a3 = ? and a4 = ? and a5 is null
 			and b1 <> ? and b2 <> ? and b3 <> ? and b4 <> ? and b5 is not null
 			and c1 > ? and c2 >= ? and d1 < ? and d2 <= ?
-			and e1 like ?")
+			and e1 like ?
+			and f2 = ? and (f3 = ?) and (f4 = ? or f4 = ?)")
 
 		assert args == [
 			1, "atom", true, "over",
 			9000, "atom", false, "dune",
-			10, 11, 12, 13, "abc"
+			10, 11, 12, 13, "abc",
+			100, 101, 102, 103
 		]
 	end
 
