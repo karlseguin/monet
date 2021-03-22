@@ -46,7 +46,7 @@ defmodule Monet.Transaction do
 	"""
 	def commit(tx) do
 		conn = transaction(tx, :conn)
-		with :ok, Writer.query(conn, "commit"),
+		with :ok <- Writer.query(conn, "commit"),
 		     {:ok, "&4 t\n"} <- Reader.message(conn) # make sure auto-commit is turned back on
 		do
 			:ok
@@ -61,7 +61,7 @@ defmodule Monet.Transaction do
 	"""
 	def rollback(tx) do
 		conn = transaction(tx, :conn)
-		with :ok, Writer.query(conn, "rollback"),
+		with :ok <- Writer.query(conn, "rollback"),
 		     {:ok, "&4 t\n"} <- Reader.message(conn)
 		do
 			:ok
