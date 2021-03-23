@@ -89,9 +89,7 @@ defmodule Monet.Connection do
 				case crb_result do
 					# If the commit/rollback failed, this is the result we'll return
 					# plus we might need to close the connection
-					{:error, err} ->
-						conn = if Error.closed?(err), do: nil, else: conn
-						{crb_result, conn}
+					{:error, _} -> {crb_result, close(conn)}
 					:ok ->
 						# If the commit/rollback succeeded, we need to clean up the value
 						# returned by the supplied fun and we know we don't need to close
