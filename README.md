@@ -14,15 +14,15 @@ You can start a pool by adding `Monet` to your supervisor tree and providing con
 
 ```elixir
 opts = [
-    pool_size: 10,
-    port: 50_000,
-    host: "127.0.0.1",
-    username: "monetdb",
-    password: "monetdb",
-    database: "monetdb",
-    read_timeout: 10_000,
-    send_timeout: 10_000,
-    connect_timeout: 10_000,
+  pool_size: 10,
+  port: 50_000,
+  host: "127.0.0.1",
+  username: "monetdb",
+  password: "monetdb",
+  database: "monetdb",
+  read_timeout: 10_000,
+  send_timeout: 10_000,
+  connect_timeout: 10_000,
 ]
 children = [
   ...

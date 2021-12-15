@@ -73,7 +73,7 @@ defmodule Monet.Tests.Monet do
 
 	test "fuzz insert and select sql types" do
 		create = @sql_types
-		|> Enum.map(fn {name, opts}	 -> "#{name} #{opts[:sql]} null" end)
+		|> Enum.map(fn {name, opts} -> "#{name} #{opts[:sql]} null" end)
 		|> Enum.join(", ")
 
 		columns = @sql_types

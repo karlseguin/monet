@@ -338,7 +338,7 @@ defmodule Monet do
 	@impl NimblePool
 	def init_worker(state) do
 		with {:ok, conn} <- Connection.connect(pool(state, :config)),
-				 :ok <- Connection.controlling_process(conn, self())
+		     :ok <- Connection.controlling_process(conn, self())
 		do
 			{:ok, conn, reset(state)}
 		else

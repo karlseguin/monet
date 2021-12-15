@@ -65,9 +65,9 @@ defmodule Monet.Reader do
 		case String.split(data, "\n", parts: 6) do
 			[header, _tables, columns, types, _length, rows] ->
 				with {:ok, types} <- parse_result_types(types),
-						 {:ok, row_count, header} <- parse_result_header(header),
-						 {:ok, columns} <- parse_result_columns(columns),
-						 {:ok, rows} <- parse_result_rows(row_count, types, rows)
+				     {:ok, row_count, header} <- parse_result_header(header),
+				     {:ok, columns} <- parse_result_columns(columns),
+				     {:ok, rows} <- parse_result_rows(row_count, types, rows)
 				do
 					{:ok, Result.new(header, columns, rows, row_count)}
 				end
@@ -78,7 +78,7 @@ defmodule Monet.Reader do
 	# result from an insert or update
 	defp parse_result(<<"&2 ", data::binary>>, _conn) do
 		with {row_count, <<" ", rest::binary>>} <- Integer.parse(data),
-				 {last_id, _} <- Integer.parse(rest)
+		     {last_id, _} <- Integer.parse(rest)
 		do
 			{:ok, Result.upsert(data, row_count, last_id)}
 		else
@@ -238,7 +238,7 @@ defmodule Monet.Reader do
 
 	defp parse_value(:time, <<data::binary>>) do
 		with {:ok, data, rest, _, _, _} <- extract_time(data),
-				 {:ok, time} <- build_time(data)
+		     {:ok, time} <- build_time(data)
 		do
 			{:ok, rest, time}
 		else
@@ -249,7 +249,7 @@ defmodule Monet.Reader do
 	# MonetDB strips out any leading zeros from the year, so we can't use Date.from_iso8601
 	defp parse_value(:date, <<data::binary>>) do
 		with {:ok, [year, month, day], rest, _, _, _} <- extract_date(data),
-				 {:ok, date} <- Date.new(year, month, day)
+		     {:ok, date} <- Date.new(year, month, day)
 		do
 			{:ok, rest, date}
 		else
@@ -259,8 +259,8 @@ defmodule Monet.Reader do
 
 	defp parse_value(:timestamp, <<data::binary>>) do
 		with {:ok, <<" ", rest::binary>>, date} <- parse_value(:date, data),
-				 {:ok, rest, time} <- parse_value(:time, rest),
-				 {:ok, datetime} <- NaiveDateTime.new(date, time)
+		     {:ok, rest, time} <- parse_value(:time, rest),
+		     {:ok, datetime} <- NaiveDateTime.new(date, time)
 		do
 			{:ok, rest, datetime}
 		else
@@ -271,8 +271,8 @@ defmodule Monet.Reader do
 	# I'm pretty this timezone stuff isn't right
 	defp parse_value(:timestamptz, <<data::binary>>) do
 		with {:ok, <<" ", rest::binary>>, date} <- parse_value(:date, data),
-				 {:ok, rest, time} <- parse_value(:time, rest),
-				 {:ok, time_zone, rest, _, _, _} <- extract_time_zone(rest)
+		     {:ok, rest, time} <- parse_value(:time, rest),
+		     {:ok, time_zone, rest, _, _, _} <- extract_time_zone(rest)
 		do
 			{timezone, abbreviation, offset} = build_time_zone(time_zone)
 			datetime = %DateTime{
